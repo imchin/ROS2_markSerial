@@ -1,0 +1,4 @@
+Idmcu: 1
+Port: "/dev/ttyACM0"
+Setup_Pub: [           [1,"Topic1","Testcase1.msg"],[2,"Topic2","Testcase2.msg"],[3,"Encoder","Encoder.msg"]          ]
+path_arduino: "arduino"
