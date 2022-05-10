@@ -29,7 +29,7 @@ def get_params(self,q):
 
 def check_port_open(self,Port):
     try:
-        ser = serial.Serial(Port, 115200, timeout=1000)  
+        ser = serial.Serial(Port, 115200, timeout=1000 ,parity="E",stopbits=1)  
         self.get_logger().info(Port + ': port is Open.')
         return ser
     except:

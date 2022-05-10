@@ -36,10 +36,8 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/Long.msg"
-  "msg/Testcase1.msg"
-  "msg/Testcase2.msg"
-  "msg/Encoder.msg"
+  "msg/Pose.msg"
+ 
   
 )
 

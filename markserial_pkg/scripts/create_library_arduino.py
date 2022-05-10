@@ -201,7 +201,7 @@ def create_cppFile(listVoid,id_mcu,id_topic,dataType,dataName):
         f.write("    _serial->write(buffE,2);\n")
         f.write("}\n")
         for i in range(0,len(listVoid)):
-            f.write(listVoid[i][8:len(listVoid[i])-1])
+            f.write(listVoid[i][8:12]+" MarkSerial::"+listVoid[i][13:len(listVoid[i])-1])
             f.write(("{\n"))
             f.write("    _Sendstart();\n")
             f.write("    _SendHands("+str(id_mcu)+","+str(id_topic[i])+");\n")
