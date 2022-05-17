@@ -8,8 +8,8 @@ ROS2 packages uartprotocol
 
 Install my packages
 ```bash
-  mkdir -p ~/mark_serial_ws/scr
-  cd ~/mark_serial_ws/scr
+  mkdir -p ~/mark_serial_ws/src
+  cd ~/mark_serial_ws/src
   git clone https://github.com/imchin/ROS2_markSerial .
   cd ~/mark_serial_ws
   colcon build
@@ -19,7 +19,7 @@ Install my packages
 # Usage/Examples
 
 ```
-cd ~/mark_serial_ws/scr/markserial_pkg/config
+cd ~/mark_serial_ws/src/markserial_pkg/config
 code setup_markSerial.yaml
 
 ```
@@ -69,7 +69,7 @@ yaml is contain : (Idmcu,Port,Setup_Pub,path_arduino)
   ## Run python to generate Library for Arduino.
 
   ```
-cd ~/mark_serial_ws/scr/markserial_pkg/scripts
+cd ~/mark_serial_ws/src/markserial_pkg/scripts
 python create_library_arduino.py
 
 ```
