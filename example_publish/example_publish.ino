@@ -6,7 +6,7 @@ float y=2;
 float z=3;
 void setup() {
   
-  Serial.begin(115200,SERIAL_8E1);    //create object uart setup SERIAL_8E1
+  Serial.begin(115200);    //create object uart setup SERIAL_8E1
   ros2Serial.begin(&Serial,1);    //initial (&serial,Idmcu)
 }
 

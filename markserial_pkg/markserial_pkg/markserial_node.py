@@ -29,7 +29,8 @@ def get_params(self,q):
 
 def check_port_open(self,Port):
     try:
-        ser = serial.Serial(Port, 115200, timeout=1000 ,parity="E",stopbits=1)  
+        # ser = serial.Serial(Port, 115200, timeout=1000 ,parity="E",stopbits=1)  
+        ser = serial.Serial(Port, 115200, timeout=1000 ,stopbits=1)  
         self.get_logger().info(Port + ': port is Open.')
         return ser
     except:
@@ -193,7 +194,7 @@ class ThreadTwo(Node):
             elif(state==7 and buff[indexPre]==126 ):
                 # print(datagrab)
                 self.datagrab=datagrab
-                self.pubb()
+                self.pubb()    # verify data done
                 state=0
             elif(state==7 and buff[indexPre]==42 ):
                 state=8

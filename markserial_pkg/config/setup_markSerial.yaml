@@ -1,4 +1,4 @@
 Idmcu: 1
-Port: "/dev/ttyUSB0"
-Setup_Pub: [           [1,"Pose","Pose.msg"]        ]
+Port: "/dev/ttyACM0"
+Setup_Pub: [          [1,"Pose","Pose.msg"], [2,"Imu_arduino","Imu.msg"]        ]
 path_arduino: "arduino"
