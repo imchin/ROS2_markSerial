@@ -19,7 +19,7 @@ Install my packages
 # Usage/Examples
 
 ```
-cd ~/mark_serial_ws/src/markserial_pkg/config
+cd ~/mark_serial_ws/scr/markserial_pkg/config
 code setup_markSerial.yaml
 
 ```
