@@ -69,7 +69,7 @@ yaml is contain : (Idmcu,Port,Setup_Pub,path_arduino)
   ## Run python to generate Library for Arduino.
 
   ```
-cd ~/mark_serial_ws/src/markserial_pkg/scripts
+cd ~/mark_serial_ws/scr/markserial_pkg/scripts
 python create_library_arduino.py
 
 ```
