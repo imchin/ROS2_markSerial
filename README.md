@@ -8,8 +8,8 @@ ROS2 packages uartprotocol
 
 Install my packages
 ```bash
-  mkdir -p ~/mark_serial_ws/scr
-  cd ~/mark_serial_ws/scr
+  mkdir -p ~/mark_serial_ws/src
+  cd ~/mark_serial_ws/src
   git clone https://github.com/imchin/ROS2_markSerial .
   cd ~/mark_serial_ws
   colcon build
