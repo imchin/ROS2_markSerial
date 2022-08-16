@@ -32,12 +32,11 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-
-find_package(rosidl_default_generators REQUIRED)
-
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Pose.msg"
   "msg/Imu.msg"
+  "msg/Count.msg"
+  "msg/Count2.msg"
   
 )
 

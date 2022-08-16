@@ -2,3 +2,4 @@ Idmcu: 1
 Port: "/dev/ttyACM0"
 Setup_Pub: [          [1,"Pose","Pose.msg"], [2,"Imu_arduino","Imu.msg"]        ]
 path_arduino: "arduino"
+Setup_Sub: [          [5,"Count","Count.msg"], [6,"Count2","Count2.msg"]        ]

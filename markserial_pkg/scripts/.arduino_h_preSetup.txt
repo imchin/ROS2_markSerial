@@ -1,0 +1,56 @@
+#include "Arduino.h" 
+class MarkSerial{
+    public:
+        MarkSerial();
+        void begin(Stream *SerialObject,uint8_t Idmcu);
+        void Spin_node();
+
+    
+
+    // get    
+    private:
+        int _Idmcu=0;
+        Stream* _serial;
+        uint8_t _start[4]={73,109,64,99};
+        uint8_t _stop[2]={126,126};
+        uint8_t _continue[2]={42,42};
+        void _Sendstart();
+        void _SendHands(uint8_t Idmcu,uint8_t IdTopic);
+        void _Sendstop();
+        void _Sendcontinue();
+        void _SendUint8(uint8_t data);
+        void _SendUint16(uint16_t data);
+        void _SendUint32(uint32_t data);
+        void _SendUint64(uint64_t data);
+        void _SendInt8(int8_t data);
+        void _SendInt16(int16_t data);
+        void _SendInt32(int32_t data);
+        void _SendInt64(int64_t data);
+        void _SendFloat32(float data);
+        void _SendString(String data);
+
+
+        uint8_t _sum=0;
+        void _SendSum();
+        uint8_t _state=0;
+        uint8_t _datain[1]={0};
+        uint64_t _bb=0;
+        
+        
+        uint8_t _incomingIndexTopic=0;
+        int8_t _OnTopic=-1;
+        uint8_t _Ontype=0;
+        uint8_t _Indexdata=0;
+        uint8_t _sumIn=0;
+       
+
+        String _bufff="";
+        uint8_t q=0;
+        uint8_t w=0; 
+        uint8_t _loop=0;
+        uint8_t _loopTo=0;
+
+
+
+
+};

@@ -21,7 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'markserial_node = markserial_pkg.markserial_node:main',
-            
+            'count_pub_node = markserial_pkg.count_pub_node:main',
         ],
     },
 )

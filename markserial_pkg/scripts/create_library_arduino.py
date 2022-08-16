@@ -10,11 +10,11 @@ def get_params(q):
         print('Get '+q+' Done.')
         return  ans
     except:
-        print('Get '+q+' Failed'+'Something went wrong when opening YAML.')
+        print('Get '+q+' Fail'+'Something went wrong when opening YAML.')
 
     return 0
 def mkdir():
-    path="Failure"
+    path="Fail"
     try:
         path = get_params("path_arduino")
         path=path+"/libraries/MarkSerial"
@@ -57,165 +57,242 @@ def setupvarforcreatelib():
         print("Error setup variable.")
     return id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName
 
+def setupvarforcreatelibSub():
+    id_mcu=0
+    id_topic=[]
+    nameofTopic=[]
+    interfacefile=[]
+    dataType=[]
+    dataName=[]
+    try:
+        id_mcu=get_params("Idmcu")
+        Setup_Sub=get_params("Setup_Sub")
+        for i in range(0,len(Setup_Sub)):
+            id_topic.append(Setup_Sub[i][0])
+            nameofTopic.append(Setup_Sub[i][1])
+            interfacefile.append(Setup_Sub[i][2])
+        for i in range (0,len(interfacefile)):
+            tempType=[]
+            tempName=[]
+            tempdatagrab=[]
+            path = os.path.join(os.path.expanduser('~'), 'mark_serial_ws', 'src','markserial_interfaces','msg',  interfacefile[i])
+            msg = open(path, 'r').read().splitlines()
+            for j in range(0,len(msg)):
+                line=msg[j].split()
+                tempType.append(line[0])
+                tempName.append(line[1])
+                tempdatagrab.append(0)
+            dataType.append(tempType)
+            dataName.append(tempName)
+           
+    except:
+        print("Error setup variable.")
 
+    return id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName
+
+
+def create_hstruct(fw):
+    id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName=setupvarforcreatelibSub()
+    public_struct=[]
+    fw.write("\r\r\r        // gen\r")
+    for i in range (0,len(dataType)):
+        q="        struct{\r"
+        for j in range (0,len(dataType[i])):
+            if(convertdatatype(dataType[i][j])!="String"):
+                q=q+"            "+convertdatatype(dataType[i][j])+" "+dataName[i][j]+"= 0;\r"
+            else:
+                q=q+"            "+convertdatatype(dataType[i][j])+" "+dataName[i][j]+"= \"\";\r"
+        q=q+"        } Sub_"+nameofTopic[i]+";\r\r"
+        public_struct.append(q)
+        fw.write(q)
+    return public_struct
+def getMaxNdata(q):
+    w=0
+    for i in range (0,len(q)):
+        if(len(q[i])>=w):
+            w=len(q[i])
+    return w
+def Arraymaptype(dataType):
+    q="{"
+    for i in range(len(dataType)):
+        q=q+"{"
+        for j in range(len(dataType[i])):
+            if(j<len(dataType[i])-1):
+                q=q+typetoProtocol(dataType[i][j])+","
+            else:
+                q=q+typetoProtocol(dataType[i][j])
+        if(i<len(dataType)-1):
+            q=q+"},"
+        else:
+            q=q+"}"
+    q=q+"};\r"
+    return q
+def typetoProtocol(typee):
+    if(typee=="uint8"):
+        return  "8"
+    elif(typee=="uint16"):
+        return  "16"
+    elif(typee=="uint32"):
+        return  "32"
+    elif(typee=="uint64"):
+        return  "64"
+    elif(typee=="int8"):
+        return  "18"
+    elif(typee=="int16"):
+        return  "116"
+    elif(typee=="int32"):
+        return  "132"
+    elif(typee=="int64"):
+        return  "164"
+    elif(typee=="float32" or typee=="float64" ):
+        return  "111"
+    elif(typee=="string" ):
+        return  "242"
+    else:
+        return "0"
+def ArraytotalVar(q):
+    w="{"
+    for i in range (0,len(q)):
+        if(i<len(q)-1):
+            w=w+str(len(q[i]))+","
+        else:
+            w=w+str(len(q[i]))
+    w=w+"};\r"
+    return w
+def gen_privateStruct(fw):
+    id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName=setupvarforcreatelibSub()
+    fw.write("\r\r\r        // gen\r")
+    q="        void* _nonverify["+str(len(id_topic))+"]["+str(getMaxNdata(dataType))+"];\r"
+    q=q+"        void* _verify["+str(len(id_topic))+"]["+str(getMaxNdata(dataType))+"];\r"
+    q=q+"        uint8_t _Idtopic_sub["+str(len(id_topic))+"]={"
+    for i in range (0,len(id_topic)):
+        if(i<len(id_topic)-1):
+            q=q+str(id_topic[i])+","
+        else:
+            q=q+str(id_topic[i])
+    q=q+"};\r"
+    q=q+"        uint8_t _TopicType["+str(len(id_topic))+"]["+str(getMaxNdata(dataType))+"]="+Arraymaptype(dataType)
+    q=q+"        uint8_t _Totalvar["+str(len(id_topic))+"]="+ArraytotalVar(dataType)
+    fw.write(q)
+    return 1
+def publicStructToprivateStruct(fw,q):
+    w=""
+    tt=1
+    fw.write("\r\r\r        // gen\r")
+    for i in range(0,len(q)):
+        e=""
+        for j in range(0,len(q[i])):
+            if(q[i][j]=="}"):
+                e=e+"}_"
+                tt=0
+            elif(tt):
+                e=e+q[i][j]
+            else:
+                tt=1
+        w=w+e
+    fw.write(w)
+    return 1
 def create_hFile(listVoid):
     try:
         path = mkdir()
         path = path +"/MarkSerial.h"
-        f  = open(path, "w+")
-        f.write("#include \"Arduino.h\" \n")     
-        f.write("class MarkSerial{\n\n")           
-        f.write("    public:\n")
-        f.write("        MarkSerial();\n")
-        f.write("        void begin(Stream *SerialObject,uint8_t Idmcu);\n")
-        for i in range(0,len(listVoid)):
-            f.write(listVoid[i])
-            f.write("\n")
-        f.write("\n")
-        f.write("    private:\n")
-        f.write("        int _Idmcu=0;\n")
-        f.write("        Stream* _serial;\n")
-        f.write("        uint8_t _start[4]={73,109,64,99};\n")
-        f.write("        uint8_t _stop[2]={126,126};\n")
-        f.write("        uint8_t _continue[2]={42,42};\n")
-        f.write("        void _Sendstart();\n")
-        f.write("        void _SendHands(uint8_t Idmcu,uint8_t IdTopic);\n")
-        f.write("        void _Sendstop();\n")
-        f.write("        void _Sendcontinue();\n")
-        f.write("        void _SendUint8(uint8_t data);\n")
-        f.write("        void _SendUint16(uint16_t data);\n")
-        f.write("        void _SendUint32(uint32_t data);\n")
-        f.write("        void _SendUint64(uint64_t data);\n")
-        f.write("        void _SendInt8(int8_t data);\n")
-        f.write("        void _SendInt16(int16_t data);\n")
-        f.write("        void _SendInt32(int32_t data);\n")
-        f.write("        void _SendInt64(int64_t data);\n")
-        f.write("        void _SendFloat32(float data);\n")
-        f.write("        void _SendString(char data[]);\n")
-        f.write("};\n")
-        f.close()
+        fw  = open(path, "w+")
+        pathr= os.path.join(os.path.expanduser('~'), 'mark_serial_ws', 'src','markserial_pkg','scripts', '.arduino_h_preSetup.txt')
+        fr=open(pathr, 'r') 
+        fw.write("// ***************************************************************************************************************************************************\r")
+        fw.write("//      |          This script was auto-generated by create_library_arduino.py which received parameters from setup_markSerial.yaml            |\r")
+        fw.write("//      |                                         EDITING THIS FILE BY HAND IS NOT RECOMMENDED                                                 |\r")
+        fw.write("// ***************************************************************************************************************************************************\r\r")
+        public_struct=[]
+        c=0
+        for line in fr:
+            c=c+1
+            if(c==7):
+                try:
+                    fw.write("\r\r\r        // gen\r")
+                    for i in range(0,len(listVoid)):
+                        fw.write(listVoid[i])
+                        fw.write("\n")
+                    print("gen voidPub Done")
+                    public_struct=create_hstruct(fw)
+                    print("gen public_struct Done")
+                except:
+                    print("gen public_struct or voidPub Fail.")
+            elif(c==55):
+                try:
+                    gen_privateStruct(fw)
+                    publicStructToprivateStruct(fw,public_struct)
+                    print("gen private_struct Done")
+                except:
+                    print("gen private_struct Fail")
+            else:
+                fw.write(line)
         print(".h Done.")
     except:
-        print(".h Failed.")
+        print(".h Fail.")
     return 0
+
+def genPointer(fw):
+    id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName=setupvarforcreatelibSub()
+    fw.write("\r    // gen\r")
+    q=""
+    w=""
+    for i in range(0,len(id_topic)):
+        for j in range(0,len(dataName[i])):
+            q=q+"    _nonverify["+str(i)+"]["+str(j)+"]"+"=&_Sub_"+nameofTopic[i]+"."+dataName[i][j]+";\r"
+            w=w+"    _verify["+str(i)+"]["+str(j)+"]"+"=&Sub_"+nameofTopic[i]+"."+dataName[i][j]+";\r"
+    q=q+"\r\r"
+    q=q+w
+    fw.write(q)
+    fw.write("\r\r\r")
+    return 1
+
 def create_cppFile(listVoid,id_mcu,id_topic,dataType,dataName):
     try:
         path = mkdir()
         path = path +"/MarkSerial.cpp"
-        f  = open(path, "w+")
-        f.write("#include \"MarkSerial.h\"\n")
-        f.write("MarkSerial::MarkSerial(){\n")
-        f.write("}\n")
-        f.write("void MarkSerial::begin(Stream *SerialObject,uint8_t Idmcu){\n")
-        f.write("    _serial=SerialObject;\n")
-        f.write("    _Idmcu=Idmcu;\n")
-        f.write("}\n")
-        f.write("void MarkSerial::_Sendstart(){\n")
-        f.write("    _serial->write(_start,4);\n")
-        f.write("}\n")
-        f.write("void MarkSerial::_Sendstop(){\n")
-        f.write("    _serial->write(_stop,2);\n")
-        f.write("}\n")
-        f.write("void MarkSerial::_Sendcontinue(){\n")
-        f.write("    _serial->write(_continue,2);\n")
-        f.write("}\n")
-        f.write("void MarkSerial::_SendHands(uint8_t Idmcu,uint8_t IdTopic){\n")
-        f.write("   uint8_t q[1]={0};\n")
-        f.write("   q[0]=Idmcu<<4;\n")
-        f.write("   q[0]=q[0]|IdTopic;\n")
-        f.write("   _serial->write(q,1);\n")
-        f.write("}\n")
-        f.write("void MarkSerial::_SendUint8(uint8_t data){\n")
-        f.write("    uint8_t buff[2]={8,0};\n")
-        f.write("    buff[1]=data;\n")
-        f.write("    _serial->write(buff,2);\n")
-        f.write("}\n")
-        f.write("void MarkSerial::_SendUint16(uint16_t data){\n")
-        f.write("    uint8_t buff[3]={16,0,0};\n")
-        f.write("    buff[1]=(data&(0xff<<8))>>8;\n")
-        f.write("    buff[2]=data&0xff;\n")
-        f.write("    _serial->write(buff,3);\n")
-        f.write("}\n")
-        f.write("void MarkSerial::_SendUint32(uint32_t data){\n")
-        f.write("    uint8_t buff[5]={32,0,0,0,0};\n")
-        f.write("    buff[1]=(data&(0xff<<24))>>24;\n")
-        f.write("    buff[2]=(data&(0xff<<16))>>16;\n")
-        f.write("    buff[3]=(data&(0xff<<8))>>8;\n")
-        f.write("    buff[4]=data&0xff;\n")
-        f.write("    _serial->write(buff,5);\n")
-        f.write("}\n")
-        f.write("void MarkSerial::_SendUint64(uint64_t data){\n")
-        f.write("    uint8_t buff[9]={64,0,0,0,0,0,0,0,0};\n")
-        f.write("    buff[1]=(data&(0xff<<56))>>56;\n")
-        f.write("    buff[2]=(data&(0xff<<48))>>48;\n")
-        f.write("    buff[3]=(data&(0xff<<40))>>40;\n")
-        f.write("    buff[4]=(data&(0xff<<32))>>32;\n")
-        f.write("    buff[5]=(data&(0xff<<24))>>24;\n")
-        f.write("    buff[6]=(data&(0xff<<16))>>16;\n")
-        f.write("    buff[7]=(data&(0xff<<8))>>8;\n")
-        f.write("    buff[8]=data&0xff;\n")
-        f.write("    _serial->write(buff,9);\n")
-        f.write("}\n")
-        f.write("void MarkSerial::_SendInt8(int8_t data){\n")
-        f.write("    uint8_t buff[2]={8,0};\n")
-        f.write("    buff[1]=data;\n")
-        f.write("    _serial->write(buff,2);\n")
-        f.write("}\n")
-        f.write("void MarkSerial::_SendInt16(int16_t data){\n")
-        f.write("    uint8_t buff[3]={16,0,0};\n")
-        f.write("    buff[1]=(data&(0xff<<8))>>8;\n")
-        f.write("    buff[2]=data&0xff;\n")
-        f.write("    _serial->write(buff,3);\n")
-        f.write("}\n")
-        f.write("void MarkSerial::_SendInt32(int32_t data){\n")
-        f.write("    uint8_t buff[5]={32,0,0,0,0};\n")
-        f.write("    buff[1]=(data&(0xff<<24))>>24;\n")
-        f.write("    buff[2]=(data&(0xff<<16))>>16;\n")
-        f.write("    buff[3]=(data&(0xff<<8))>>8;\n")
-        f.write("    buff[4]=data&0xff;\n")
-        f.write("    _serial->write(buff,5);\n")
-        f.write("}\n")
-        f.write("void MarkSerial::_SendInt64(int64_t data){\n")
-        f.write("    uint8_t buff[9]={64,0,0,0,0,0,0,0,0};\n")
-        f.write("    buff[1]=(data&(0xff<<56))>>56;\n")
-        f.write("    buff[2]=(data&(0xff<<48))>>48;\n")
-        f.write("    buff[3]=(data&(0xff<<40))>>40;\n")
-        f.write("    buff[4]=(data&(0xff<<32))>>32;\n")
-        f.write("    buff[5]=(data&(0xff<<24))>>24;\n")
-        f.write("    buff[6]=(data&(0xff<<16))>>16;\n")
-        f.write("    buff[7]=(data&(0xff<<8))>>8;\n")
-        f.write("    buff[8]=data&0xff;\n")
-        f.write("    _serial->write(buff,9);\n")
-        f.write("}\n")
-        f.write("void MarkSerial::_SendFloat32(float data){\n")
-        f.write("    byte * bb = (byte *) &data;\n")
-        f.write("    uint8_t buff[1]={111};\n")
-        f.write("    _serial->write(buff,1);\n")
-        f.write("    _serial->write(bb,4);\n")
-        f.write("}\n")
-        f.write("void MarkSerial::_SendString(char data[]){\n")
-        f.write("    uint8_t buffS[1]={242};\n")
-        f.write("    uint8_t buffE[2]={42,126};\n")
-        f.write("    _serial->write(buffS,1);\n")
-        f.write("    _serial->print(data);\n")
-        f.write("    _serial->write(buffE,2);\n")
-        f.write("}\n")
-        for i in range(0,len(listVoid)):
-            f.write(listVoid[i][8:12]+" MarkSerial::"+listVoid[i][13:len(listVoid[i])-1])
-            f.write(("{\n"))
-            f.write("    _Sendstart();\n")
-            f.write("    _SendHands("+str(id_mcu)+","+str(id_topic[i])+");\n")
-            for j in range(0,len(dataType[i])):
-                f.write(typetoVoid(dataType[i][j],dataName[i][j]))
-                if(j<len(dataType[i])-1):
-                    f.write("    _Sendcontinue();\n")
-                else:
-                    f.write("    _Sendstop();\n")
-            f.write("}\n")
-        f.close
+        fw  = open(path, "w+") 
+        pathr= os.path.join(os.path.expanduser('~'), 'mark_serial_ws', 'src','markserial_pkg','scripts', '.arduino_cpp_preSetup.txt')
+        fr=open(pathr, 'r') 
+        fw.write("// ***************************************************************************************************************************************************\r")
+        fw.write("//      |          This script was auto-generated by create_library_arduino.py which received parameters from setup_markSerial.yaml            |\r")
+        fw.write("//      |                                         EDITING THIS FILE BY HAND IS NOT RECOMMENDED                                                 |\r")
+        fw.write("// ***************************************************************************************************************************************************\r\r")
+        c=0
+        for line in fr:        
+            c=c+1
+            if(c==124): 
+                try:
+                    fw.write("\r\r\r// gen\r")
+                    for i in range(0,len(listVoid)):
+                        fw.write(listVoid[i][8:12]+" MarkSerial::"+listVoid[i][13:len(listVoid[i])-1])
+                        fw.write(("{\n"))
+                        fw.write("    _sum=0;\r")
+                        fw.write("    _Sendstart();\n")
+                        fw.write("    _SendHands("+str(id_mcu)+","+str(id_topic[i])+");\n")
+                        for j in range(0,len(dataType[i])):
+                            fw.write(typetoVoid(dataType[i][j],dataName[i][j]))
+                            if(j<len(dataType[i])-1):
+                                fw.write("    _Sendcontinue();\n")
+                            else:
+                                fw.write("    _Sendstop();\n")
+                        fw.write("    _SendSum();\r")
+                        fw.write("}\n")
+                    print("gen functionPub Done.")
+                except:
+                    print("gen functionPub Fail.")
+            elif(c==9):
+                try:
+                    genPointer(fw)
+                    print("gen pointer Done.")
+                except:
+                    print("gen pointer Fail.")
+            else:
+                fw.write(line)
+        fw.close
         print(".cpp Done.")
     except:
-        print(".cpp Failed.")
+        print(".cpp Fail.")
     return 0
 def convertdatatype(strr):
     if(strr=="uint8"or strr=="uint16" or strr=="uint32" or strr=="uint64" or strr=="int8"or strr=="int16" or strr=="int32" or strr=="int64" ):
@@ -223,7 +300,7 @@ def convertdatatype(strr):
     elif(strr=="float32" or strr=="float64" ):
         return "float"
     elif(strr=="string"):
-        return "char"
+        return "String"
     else:
         return "bool"
     

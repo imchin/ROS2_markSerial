@@ -1,0 +1,361 @@
+#include "MarkSerial.h"
+MarkSerial::MarkSerial(){
+}
+void MarkSerial::begin(Stream *SerialObject,uint8_t Idmcu){
+    _serial=SerialObject;
+    _Idmcu=Idmcu;
+
+  
+  
+// get
+}     
+void MarkSerial::_Sendstart(){
+    _sum=_sum+73+109+64+99;
+    _serial->write(_start,4);
+    
+}
+void MarkSerial::_Sendstop(){
+    _sum=_sum+126+126;
+    _serial->write(_stop,2);
+}
+void MarkSerial::_Sendcontinue(){
+    _sum=_sum+42+42;
+    _serial->write(_continue,2);
+}
+void MarkSerial::_SendHands(uint8_t Idmcu,uint8_t IdTopic){
+   uint8_t q[1]={0};
+   q[0]=Idmcu<<4;
+   q[0]=q[0]|IdTopic;
+    _sum=_sum+q[0];
+   _serial->write(q,1);
+}
+void MarkSerial::_SendUint8(uint8_t data){
+    uint8_t buff[2]={8,0};
+    buff[1]=data& 0xFF;
+    _sum=_sum+buff[0]+buff[1];
+    _serial->write(buff,2);
+}
+void MarkSerial::_SendUint16(uint16_t data){
+    uint8_t buff[3]={16,0,0};
+    buff[3] = data >> 0 & 0xFF;
+    buff[2] = data >> 8 & 0xFF;
+    _sum=_sum+buff[0]+buff[1]+buff[2];
+    _serial->write(buff,3);
+}
+void MarkSerial::_SendUint32(uint32_t data){
+    uint8_t buff[5]={32,0,0,0,0};
+    buff[4] = data >> 0 & 0xFF;
+    buff[3] = data >> 8 & 0xFF;
+    buff[2] = data >> 16 & 0xFF;
+    buff[1] = data >> 24 & 0xFF;
+    _sum=_sum+buff[0]+buff[1]+buff[2]+buff[3]+buff[4];
+    _serial->write(buff,5);
+}
+void MarkSerial::_SendUint64(uint64_t data){
+    uint8_t buff[9]={64,0,0,0,0,0,0,0,0};
+    buff[8] = data >> 0 & 0xFF;
+    buff[7] = data >> 8 & 0xFF;
+    buff[6] = data >> 16 & 0xFF;
+    buff[5] = data >> 24 & 0xFF;
+    buff[4] = data >> 32 & 0xFF;
+    buff[3] = data >> 40 & 0xFF;
+    buff[2] = data >> 48 & 0xFF;
+    buff[1] = data >> 56 & 0xFF;
+    _sum=_sum+buff[0]+buff[1]+buff[2]+buff[3]+buff[4]+buff[5]+buff[6]+buff[7]+buff[8];
+    _serial->write(buff,9);
+}
+void MarkSerial::_SendInt8(int8_t data){
+    uint8_t buff[2]={8,0};
+    buff[1]=data& 0xFF;
+    _sum=_sum+buff[0]+buff[1];
+    _serial->write(buff,2);
+}
+void MarkSerial::_SendInt16(int16_t data){
+    uint8_t buff[3]={16,0,0};
+    buff[3] = data >> 0 & 0xFF;
+    buff[2] = data >> 8 & 0xFF;
+    _sum=_sum+buff[0]+buff[1]+buff[2];
+    _serial->write(buff,3);
+}
+void MarkSerial::_SendInt32(int32_t data){
+    uint8_t buff[5]={132,0,0,0,0};
+    buff[4] = data >> 0 & 0xFF;
+    buff[3] = data >> 8 & 0xFF;
+    buff[2] = data >> 16 & 0xFF;
+    buff[1] = data >> 24 & 0xFF;
+    _sum=_sum+buff[0]+buff[1]+buff[2]+buff[3]+buff[4];
+    _serial->write(buff,5);
+}
+void MarkSerial::_SendInt64(int64_t data){
+    uint8_t buff[9]={164,0,0,0,0,0,0,0,0};
+    buff[8] = data >> 0 & 0xFF;
+    buff[7] = data >> 8 & 0xFF;
+    buff[6] = data >> 16 & 0xFF;
+    buff[5] = data >> 24 & 0xFF;
+    buff[4] = data >> 32 & 0xFF;
+    buff[3] = data >> 40 & 0xFF;
+    buff[2] = data >> 48 & 0xFF;
+    buff[1] = data >> 56 & 0xFF;
+    _sum=_sum+buff[0]+buff[1]+buff[2]+buff[3]+buff[4]+buff[5]+buff[6]+buff[7]+buff[8];
+    _serial->write(buff,9);
+}
+void MarkSerial::_SendFloat32(float data){
+    byte * bb = (byte *) &data;
+    uint8_t buff[1]={111};
+    _sum=_sum+buff[0]+bb[0]+bb[1]+bb[2]+bb[3];
+    _serial->write(buff,1);
+    _serial->write(bb,4);
+}
+void MarkSerial::_SendString(String data){
+    uint8_t buffS[1]={242};
+    uint8_t buffE[2]={42,126};
+    _sum=_sum+242+42+126;
+    for (int i=0; i<sizeof(data); i++){
+        _sum=_sum+data[i];
+    }
+    _serial->write(buffS,1);
+    _serial->print(data);
+    _serial->write(buffE,2);
+}
+void MarkSerial::_SendSum(){
+    _serial->write(_sum);
+}
+
+
+
+
+//get
+void MarkSerial::Spin_node(){
+    if(_serial->available() > 0){
+        _serial->readBytes(_datain,1);
+        // _serial->write(_datain,1);
+        
+        switch (_state){
+            case 0:
+                if(_datain[0]==73){
+                    _sumIn=0;
+                    _state=1;
+                }else{
+                    _state=0;
+                }
+                break;
+            case 1:
+                if(_datain[0]==109){
+                    _state=2;
+                }else{
+                    _state=0;
+                }
+                break;
+            case 2:
+                if(_datain[0]==64){
+                    _state=3;
+                }else{
+                    _state=0;
+                }
+                break;
+            case 3:
+                if(_datain[0]==99){
+                    _state=4;
+                }else{
+                    _state=0;
+                }
+                break;
+            //strat protocol done
+            case 4:
+                q = _datain[0];
+                w = _datain[0];
+                q=q&0b11110000;
+                q=q>>4;
+                w=w&0b1111;
+                if(q == _Idmcu){
+                    for (int i=0;i<sizeof(_Idtopic_sub);i++){
+                        if(_Idtopic_sub[i]== w){
+                            _Indexdata=255;
+                            _OnTopic=i;
+                            _state=5;
+                            break;
+                        }
+                    }
+                }else{
+                    _OnTopic=-1;
+                    _state=0;
+                }
+                break;
+
+            case 5:
+                
+                if(_datain[0]== 8  ||_datain[0]== 18  ){
+                    _Indexdata=_Indexdata+1;
+                    _Ontype=_datain[0];
+                    _state=10;
+                }
+                else if(_datain[0]==16 ||_datain[0]== 116){
+                    _loop=0;
+                    _loopTo=2;
+                    _Indexdata=_Indexdata+1;
+                    _Ontype=_datain[0];
+                    _bb=0;
+                    _state=11;
+
+                }else if(_datain[0]==32 ||_datain[0]== 132){
+                    _loop=0;
+                    _loopTo=4;
+                    _Indexdata=_Indexdata+1;
+                    _Ontype=_datain[0];
+                    _bb=0;
+                    _state=11;
+
+                }else if(_datain[0]==64||_datain[0]== 164){
+                    _loop=0;
+                    _loopTo=8;
+                    _Indexdata=_Indexdata+1;
+                    _Ontype=_datain[0];
+                    _bb=0;
+                    _state=11;
+                }else if(_datain[0]==111){
+                    _loop=0;
+                    _loopTo=4;
+                    _Indexdata=_Indexdata+1;
+                    _Ontype=_datain[0];
+                    _bb=0;
+                    _state=11;
+                }else if(_datain[0]==242){
+                    _Indexdata=_Indexdata+1;
+                    _Ontype=_datain[0];
+                    _bufff="";
+                    _state=99;
+                }else if(_datain[0]==126){
+                    _state=90;
+                }
+                else{
+                    _state=0;
+                }
+                break;
+
+            case 10: //uint8 and  int 8 
+                if(_Ontype==8){
+                    *(uint8_t*)_nonverify[_OnTopic][_Indexdata] = (uint8_t)_datain[0];
+                }else if(_Ontype=18){
+                    *(int8_t*)_nonverify[_OnTopic][_Indexdata] = (int8_t)_datain[0];
+                }
+                _state=5;
+                break;
+
+            case 11: //n byte
+                _loop=_loop+1;
+                _bb= _bb<<8 ;
+                _bb=_bb | _datain[0];
+                if(_Ontype==16 && _loop==_loopTo){
+                    *(uint16_t*)_nonverify[_OnTopic][_Indexdata] =   (uint16_t)_bb;
+                    _state=222;
+                }else if(_Ontype==116 && _loop==_loopTo){
+                    *(int16_t*)_nonverify[_OnTopic][_Indexdata] =   (int16_t)_bb;
+                    _state=222;
+                }else if(_Ontype==32 && _loop==_loopTo){
+                    *(uint32_t*)_nonverify[_OnTopic][_Indexdata] =   (uint32_t)_bb;
+                    _state=222;
+                }else if(_Ontype==132 && _loop==_loopTo){
+                    *(int32_t*)_nonverify[_OnTopic][_Indexdata] =   (int32_t)_bb;
+                    _state=222;
+                }else if(_Ontype==64 && _loop==_loopTo){
+                    *(uint64_t*)_nonverify[_OnTopic][_Indexdata] =   (uint64_t)_bb;
+                    _state=222;
+                }else if(_Ontype==164 && _loop==_loopTo){
+                    *(int64_t*)_nonverify[_OnTopic][_Indexdata] =   (int64_t)_bb;
+                    _state=222;
+                }else if(_Ontype==111 && _loop==_loopTo){
+                    uint8_t bu[4];
+                    bu[0] = (_bb >> 0)  & 0xFF;
+                    bu[1] = (_bb >> 8)  & 0xFF;
+                    bu[2] = (_bb >> 16) & 0xFF;
+                    bu[3] = (_bb >> 24) & 0xFF;
+                    memcpy (_nonverify[_OnTopic][_Indexdata], bu, 4);
+                    _state=222;
+                }
+
+                break;
+            case 90:
+                if(_datain[0]==126){
+                    _state=111;  //checksum
+                        
+                }else{
+                    _state=0;
+                }
+            
+                break;
+            case 111:
+                if(_sumIn==_datain[0]){
+                    for (int i=0;i<_Totalvar[_OnTopic];i++){
+                        if(_TopicType[_OnTopic][i]== 8){
+                            *(uint8_t*)_verify[_OnTopic][i]=*(uint8_t*)_nonverify[_OnTopic][i];
+                        }else if (_TopicType[_OnTopic][i]== 18){
+                            *(int8_t*)_verify[_OnTopic][i]=*(int8_t*)_nonverify[_OnTopic][i];
+                        }else if (_TopicType[_OnTopic][i]== 16){
+                            *(uint16_t*)_verify[_OnTopic][i]=*(uint16_t*)_nonverify[_OnTopic][i];
+                        }else if (_TopicType[_OnTopic][i]== 116){
+                            *(int16_t*)_verify[_OnTopic][i]=*(int16_t*)_nonverify[_OnTopic][i];
+                        }else if (_TopicType[_OnTopic][i]== 32){
+                            *(uint32_t*)_verify[_OnTopic][i]=*(uint32_t*)_nonverify[_OnTopic][i];
+                        }else if (_TopicType[_OnTopic][i]== 132){
+                            *(int32_t*)_verify[_OnTopic][i]=*(int32_t*)_nonverify[_OnTopic][i];
+                        }else if (_TopicType[_OnTopic][i]== 64){
+                            *(uint64_t*)_verify[_OnTopic][i]=*(uint64_t*)_nonverify[_OnTopic][i];
+                        }else if (_TopicType[_OnTopic][i]== 164){
+                            *(int64_t*)_verify[_OnTopic][i]=*(int64_t*)_nonverify[_OnTopic][i];
+                        }else if (_TopicType[_OnTopic][i]== 111){
+                            *(float*)_verify[_OnTopic][i]=*(float*)_nonverify[_OnTopic][i];
+                        }else if (_TopicType[_OnTopic][i]== 242){
+                            *(String*)_verify[_OnTopic][i]=*(String*)_nonverify[_OnTopic][i];
+                        }
+                        
+
+                    }
+                }
+                _state=0;
+                break;
+            case 99: //string
+                if(_datain[0]==42){
+                    _state=100;
+                }else{
+                    _bufff=_bufff+char(_datain[0]);
+                    _state=99;
+                }
+                break;
+            case 100:
+                if(_datain[0]==126){
+                    *(String*)_nonverify[_OnTopic][_Indexdata] =   (String)_bufff;
+                    _state=222;
+                }else{
+                    _state=0;
+                }
+
+                break;
+            case 222:
+                if(_datain[0]==42){
+                    _state=223;
+                }else if(_datain[0]==126){
+                    _state=225;
+                }else{
+                    _state=0;
+                }
+                break;
+            case 223:
+                if(_datain[0]==42){
+                    _state=5;
+                }else{
+                    _state=0;
+                }
+                break;
+
+            case 225:
+                 if(_datain[0]==126){
+                    _state=111;
+                }else{
+                    _state=0;
+                }
+                break;
+        }
+        _sumIn=_sumIn+_datain[0];
+
+    }
+}
